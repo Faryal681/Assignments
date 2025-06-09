@@ -1,0 +1,112 @@
+https://snack.expo.dev/@faryalghani/madassignment-4
+
+Code
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { Accelerometer } from 'expo-sensors';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Context API setup
+const JokeContext = createContext();
+
+const JokeProvider = ({ children }) => {
+  const [joke, setJoke] = useState('');
+
+  const fetchJoke = async () => {
+    try {
+      const res = await fetch('https://v2.jokeapi.dev/joke/Any');
+      const data = await res.json();
+      // Handle single and twopart joke types
+      if (data.type === 'single') {
+        setJoke(data.joke);
+      } else {
+        setJoke(`${data.setup} - ${data.delivery}`);
+      }
+    } catch (err) {
+      setJoke('Error fetching joke');
+    }
+  };
+
+  const submitJoke = async () => {
+    alert('POST request simulated: Joke submitted!');
+  };
+
+  const updateJoke = async () => {
+    alert('PUT request simulated: Joke updated!');
+  };
+
+  return (
+    <JokeContext.Provider value={{ joke, fetchJoke, submitJoke, updateJoke }}>
+      {children}
+    </JokeContext.Provider>
+  );
+};
+
+// Home screen with API actions
+const HomeScreen = ({ navigation }) => {
+  const { joke, fetchJoke, submitJoke, updateJoke } = useContext(JokeContext);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Random Joke</Text>
+      <Text style={styles.joke}>{joke || 'Press a button to get a joke.'}</Text>
+      <Button title="GET Joke" onPress={fetchJoke} />
+      <Button title="POST Joke (Simulated)" onPress={submitJoke} />
+      <Button title="PUT Joke (Simulated)" onPress={updateJoke} />
+      <Button title="Go to Sensor Screen" onPress={() => navigation.navigate('Sensors')} />
+    </View>
+  );
+};
+
+// Sensor screen using accelerometer
+const SensorScreen = () => {
+  const [data, setData] = useState({ x: 0, y: 0, z: 0 });
+
+  useEffect(() => {
+    const subscription = Accelerometer.addListener(setData);
+    Accelerometer.setUpdateInterval(500);
+    return () => subscription.remove();
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Accelerometer Data</Text>
+      <Text style={styles.text}>X: {data.x.toFixed(2)}</Text>
+      <Text style={styles.text}>Y: {data.y.toFixed(2)}</Text>
+      <Text style={styles.text}>Z: {data.z.toFixed(2)}</Text>
+    </View>
+  );
+};
+
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return (
+    <JokeProvider>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Sensors" component={SensorScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </JokeProvider>
+  );
+}
+
+// Styles
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  joke: { fontSize: 16, marginVertical: 20, textAlign: 'center' },
+  text: { fontSize: 16, marginBottom: 10 },
+});
+Dependencies
+{
+  "dependencies": {
+    "expo-sensors": "~14.0.2",
+    "react-native-screens": "~4.4.0",
+    "@react-navigation/native": "^6.1.7",
+    "@react-navigation/native-stack": "6.6.1"
+  }
+}
